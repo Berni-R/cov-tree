@@ -1,7 +1,7 @@
 from typing import Callable, Sequence
 from termcolor import cprint
 
-from .node import CovNode
+from .core import CovNode
 
 
 _TREE_SET = {

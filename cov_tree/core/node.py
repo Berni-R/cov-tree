@@ -1,8 +1,8 @@
-from typing import Sequence, TypeAlias, Collection
+from typing import Sequence, TypeAlias, Collection, Iterator, Callable
 from abc import ABC, abstractmethod
 import os
-from coverage import Coverage
-from coverage.types import TMorf
+from coverage import Coverage  # type: ignore
+from coverage.types import TMorf  # type: ignore
 
 from .tools import missed_lines_str
 
@@ -41,27 +41,17 @@ class CovNode(ABC):
     def missed_lines_str(self) -> str:
         ...
 
-    def coverage(self, exclude_skipped: bool = False) -> float:
+    def coverage(self) -> float:
         """The coverage. If there are no line, it defaults to 100%.
-
-        Args:
-            exclude_skipped: Exclude the skipped lines from the total.
 
         Returns:
             The fraction of covered lines as a float in the interval [0, 1].
         """
-        num_exec, num_skipped, num_missed = self.num_lines()
+        num_exec = self.num_executable_lines()
         if num_exec == 0:
             return 1.0
 
-        if exclude_skipped:
-            total = num_exec - num_skipped
-            num_covered = num_exec - num_skipped - num_missed
-        else:
-            total = num_exec
-            num_covered = num_exec - num_missed
-
-        return num_covered / total
+        return 1 - self.num_missed_lines() / num_exec
 
     def num_lines(self) -> tuple[int, int, int]:
         return (
@@ -71,8 +61,7 @@ class CovNode(ABC):
         )
 
     def num_covered_lines(self) -> int:
-        num_exec, num_skipped, num_missed = self.num_lines()
-        return num_exec - num_skipped - num_missed
+        return self.num_executable_lines() - self.num_missed_lines()
 
     def get_child(self, name: str) -> 'CovNode':
         """The the child with the given name."""
@@ -86,6 +75,18 @@ class CovNode(ABC):
         for name in path:
             node = node._children[name]
         return node
+
+    def iter_tree(
+            self,
+            descent: Callable[['CovNode'], bool] | None = None,
+            _curr_path: Path = tuple(),
+    ) -> Iterator[tuple['CovNode', Path]]:
+        yield self, _curr_path
+
+        if descent is None or descent(self):
+            curr_path = tuple(_curr_path)
+            for child in self._children.values():
+                yield from child.iter_tree(descent, curr_path + (child.name,))
 
     def insert_child(self, child: 'CovNode', path: Path = tuple()) -> None:
         node = self
@@ -112,7 +113,7 @@ class CovNode(ABC):
         return tuple(self._children.keys())
 
     def __repr__(self) -> str:
-        cov = self.coverage(exclude_skipped=False)
+        cov = self.coverage()
         return f'<{type(self).__name__} "{self.name}" {cov:.0%}>'
 
     def __len__(self) -> int:

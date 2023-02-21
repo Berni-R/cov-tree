@@ -26,12 +26,12 @@ def build_cov_tree(
 
     # build the tree
     root: CovNode = CovModule(name="<root>")
-    for path in sorted(cov_data.measured_files()):
-        path_list = os.path.normpath(path).split(os.sep)
+    for full_path in sorted(cov_data.measured_files()):
+        *path, name = os.path.normpath(full_path).split(os.sep)
         if drop_ext:
-            path_list[-1] = os.path.splitext(path_list[-1])[0]
-        leaf = CovFile.from_coverage(cov, path, path_list[-1])
-        root.insert_child(leaf, path_list[:-1])
+            name, _ = os.path.splitext(name)
+        leaf = CovFile.from_coverage(cov, full_path, name)
+        root.insert_child(leaf, path)
 
     # clean the linear tree until the first splitting node
     # ... but remember the path to this new root node

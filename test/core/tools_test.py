@@ -1,7 +1,7 @@
 import pytest
 from typing import Collection
 
-from cov_tree.tools import missed_lines_str
+from cov_tree.core.tools import missed_lines_str
 
 
 @pytest.mark.parametrize('lines, omega, string', [
