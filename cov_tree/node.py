@@ -4,6 +4,8 @@ import os
 from coverage import Coverage
 from coverage.types import TMorf
 
+from .tools import missed_lines_str
+
 
 Path: TypeAlias = Sequence[str]
 """A convenience type alias for a three path, i.e. a sequence of node names."""
@@ -127,15 +129,12 @@ class CovFile(CovNode):
             executable_lines: Collection[int] = tuple(),
             skipped_lines: Collection[int] = tuple(),
             missed_lines: Collection[int] = tuple(),
-            missed_lines_str: str = '',
     ) -> None:
         super().__init__(name)
 
         self.executable_lines = list(executable_lines)
         self.skipped_lines = list(skipped_lines)
         self.missed_lines = list(missed_lines)
-        # TODO: this could become inconsistent!!!
-        self._missed_lines_str = missed_lines_str
 
     @classmethod
     def from_coverage(
@@ -149,13 +148,14 @@ class CovFile(CovNode):
         )
         if name is None:
             _, name = os.path.split(filename)
-        return cls(
+        node = cls(
             name=name,
             executable_lines=executable_lines,
             skipped_lines=skipped_lines,
             missed_lines=missed_lines,
-            missed_lines_str=miss_str,
         )
+        assert miss_str == node.missed_lines_str()
+        return node
 
     def num_executable_lines(self) -> int:
         return len(self.executable_lines)
@@ -167,7 +167,7 @@ class CovFile(CovNode):
         return len(self.missed_lines)
 
     def missed_lines_str(self) -> str:
-        return self._missed_lines_str
+        return missed_lines_str(self.missed_lines, self.executable_lines)
 
     def insert_child(self, child: 'CovNode', path: Path = tuple()) -> None:
         raise RuntimeError('Cannot insert a child to a file node!')
