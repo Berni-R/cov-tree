@@ -1,0 +1,8 @@
+flake8
+flake8-future-annotations
+
+mypy
+
+pytest
+pytest-sugar
+pytest-cov

@@ -1,0 +1,14 @@
+*.egg-info/
+
+__pycache__
+
+*.ipynb
+.ipynb_checkpoints
+
+.pytest_cache
+.mypy_cache
+.coverage*
+.idea
+
+ipython-input-*-profile
+profile.json

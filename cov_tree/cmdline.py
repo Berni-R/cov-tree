@@ -1,0 +1,60 @@
+from cov_tree import (
+    build_cov_tree, print_tree, cov_color, get_available_tree_sets,
+)
+import argparse
+
+
+def main() -> int:
+    argparser = argparse.ArgumentParser(
+        'cov-tree [coverage-file]',
+    )
+    argparser.add_argument(
+        'coverage_file',
+        nargs='?', default='.coverage',
+        help='The path to the coverage report file to print.',
+    )
+    argparser.add_argument(
+        '-t', '--threshold', required=False, default=None, type=float,
+        help='If the coverage is at least this high (measured in percent), '
+        'do not show the contents of the folder / sub-module.',
+    )
+    argparser.add_argument(
+        '-s', '--summarize', action='store_true',
+        help='Show per sub-module summaries.',
+    )
+    argparser.add_argument(
+        '--set', default='ascii',
+        choices=get_available_tree_sets(),
+        help='Only use pure ASCII characters.',
+    )
+    argparser.add_argument(
+        '-c', '--color', action='store_true', default=False,
+        help='Colorise the output by the coverage.',
+    )
+    argparser.add_argument(
+        '--no-color', action='store_false', dest='color',
+        help='Turn off coloring. (If both, --no-color and --color are given, '
+        'the ooption use last is relevant.)',
+    )
+
+    args = argparser.parse_args()
+    color = cov_color if args.color else None
+    if args.threshold is None:
+        threshold = None
+    else:
+        threshold = (lambda n: n.coverage() >= args.threshold / 100)
+
+    try:
+        _, tree = build_cov_tree(args.coverage_file)
+        print_tree(
+            tree,
+            show_module_stats=args.summarize,
+            cov_color=color,
+            tree_set=args.set,
+            threshold=threshold,
+        )
+    except Exception as e:
+        print(e)
+        return 1
+
+    return 0
