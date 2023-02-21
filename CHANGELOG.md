@@ -3,8 +3,10 @@
 ## Unpublished
 
 * dynamically generate string for missed lines (ensures consistency)
+* generate string for missing lines for modules
 * restructure code folder tree
 * move tree iteration function into node class
+* rename threshold to descend
 
 
 ## 0.2.0

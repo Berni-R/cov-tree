@@ -37,12 +37,10 @@ def _print_tree(
         show_module_stats: bool,
         cov_color: Callable[[float], str | None] | None,
         tree_set: Sequence[str],
-        threshold: Callable[[CovNode], bool] | None,
+        descend: Callable[[CovNode], bool] | None,
 ) -> None:
-    is_leaf_like = (
-        len(node.children) == 0 or
-        (threshold is not None and threshold(node))
-    )
+    do_descend = descend is None or descend(node)
+    is_leaf_like = len(node.children) == 0 or not do_descend
 
     tree = ''
     for last in level_last[:-1]:
@@ -69,7 +67,7 @@ def _print_tree(
         )
         if show_missing:
             cprint(
-                f'  {node.missed_lines_str()}',
+                f'  {node.missed_lines_str(not do_descend)}',
                 **kwargs,  # type: ignore
             )
     print()
@@ -85,7 +83,7 @@ def _print_tree(
                 show_module_stats=show_module_stats,
                 cov_color=cov_color,
                 tree_set=tree_set,
-                threshold=threshold,
+                descend=descend,
             )
 
 
@@ -102,7 +100,7 @@ def print_tree(
         show_module_stats: bool = True,
         cov_color: Callable[[float], str | None] | None = None,
         tree_set: str = 'fancy',
-        threshold: Callable[[CovNode], bool] | None = None,
+        descend: Callable[[CovNode], bool] | None = None,
 ) -> None:
     tree_set_ = _TREE_SET[tree_set]
     tab = len(tree_set_[0])
@@ -121,5 +119,5 @@ def print_tree(
         show_module_stats=show_module_stats,
         cov_color=cov_color,
         tree_set=tree_set_,
-        threshold=threshold,
+        descend=descend,
     )

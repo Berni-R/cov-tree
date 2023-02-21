@@ -38,7 +38,7 @@ class CovNode(ABC):
         ...
 
     @abstractmethod
-    def missed_lines_str(self) -> str:
+    def missed_lines_str(self, recursive: bool = True) -> str:
         ...
 
     def coverage(self) -> float:
@@ -78,15 +78,15 @@ class CovNode(ABC):
 
     def iter_tree(
             self,
-            descent: Callable[['CovNode'], bool] | None = None,
+            descend: Callable[['CovNode'], bool] | None = None,
             _curr_path: Path = tuple(),
     ) -> Iterator[tuple['CovNode', Path]]:
         yield self, _curr_path
 
-        if descent is None or descent(self):
+        if descend is None or descend(self):
             curr_path = tuple(_curr_path)
             for child in self._children.values():
-                yield from child.iter_tree(descent, curr_path + (child.name,))
+                yield from child.iter_tree(descend, curr_path + (child.name,))
 
     def insert_child(self, child: 'CovNode', path: Path = tuple()) -> None:
         node = self
@@ -167,7 +167,7 @@ class CovFile(CovNode):
     def num_missed_lines(self) -> int:
         return len(self.missed_lines)
 
-    def missed_lines_str(self) -> str:
+    def missed_lines_str(self, recursive: bool = True) -> str:
         return missed_lines_str(self.missed_lines, self.executable_lines)
 
     def insert_child(self, child: 'CovNode', path: Path = tuple()) -> None:
@@ -193,5 +193,13 @@ class CovModule(CovNode):
             child.num_missed_lines() for child in self._children.values()
         )
 
-    def missed_lines_str(self) -> str:
-        return ''
+    def missed_lines_str(self, recursive: bool = True) -> str:
+        if recursive <= 0:
+            return ''
+
+        missed: list[str] = []
+        for child in self._children.values():
+            child_miss = child.missed_lines_str(recursive)
+            if child_miss:
+                missed.append(f'[{child.name}: {child_miss}]')
+        return ', '.join(missed)

@@ -44,9 +44,9 @@ def main() -> int:
     args = argparser.parse_args()
     color = cov_color if args.color else None
     if args.threshold is None:
-        threshold = None
+        descend = None
     else:
-        threshold = (lambda n: n.coverage() >= args.threshold / 100)
+        descend = (lambda n: n.coverage() < args.threshold / 100)
 
     try:
         _, tree = build_cov_tree(args.coverage_file)
@@ -56,7 +56,7 @@ def main() -> int:
             show_module_stats=args.summarize,
             cov_color=color,
             tree_set=args.set,
-            threshold=threshold,
+            descend=descend,
         )
     except Exception as e:
         print(e)
