@@ -19,6 +19,10 @@ def main() -> int:
         'do not show the contents of the folder / sub-module.',
     )
     argparser.add_argument(
+        '-m', '--show-missing', action='store_true',
+        help='Show the missing lines.',
+    )
+    argparser.add_argument(
         '-s', '--summarize', action='store_true',
         help='Show per sub-module summaries.',
     )
@@ -48,6 +52,7 @@ def main() -> int:
         _, tree = build_cov_tree(args.coverage_file)
         print_tree(
             tree,
+            show_missing=args.show_missing,
             show_module_stats=args.summarize,
             cov_color=color,
             tree_set=args.set,

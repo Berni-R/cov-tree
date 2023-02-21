@@ -1,28 +1,13 @@
 import os
 import coverage  # type: ignore
 
-from .node import CovStats
-from .algo import follow_path
-
-
-def _populate(node: CovStats) -> None:
-    if len(node.children) == 0:
-        return
-
-    node.num_lines = 0
-    node.num_skipped = 0
-    node.num_missed = 0
-    for child in node.children:
-        _populate(child)
-        node.num_lines += child.num_lines
-        node.num_skipped += child.num_skipped
-        node.num_missed += child.num_missed
+from .node import CovNode, CovModule, CovFile
 
 
 def build_cov_tree(
         cov_file: str = ".coverage",
         drop_ext: bool = False,
-) -> tuple[str, CovStats]:
+) -> tuple[str, CovNode]:
     """Build a coverage tree from a coverage file.
 
     Args:
@@ -40,26 +25,20 @@ def build_cov_tree(
     cov_data = cov.get_data()
 
     # build the tree
-    root = CovStats(name="<root>")
+    root: CovNode = CovModule(name="<root>")
     for path in sorted(cov_data.measured_files()):
         path_list = os.path.normpath(path).split(os.sep)
         if drop_ext:
             path_list[-1] = os.path.splitext(path_list[-1])[0]
-        leaf = follow_path(root, path_list, create=True)
-        _, executable_lines, skipped_lines, missed_lines, _ = (
-            cov.analysis2(path)
-        )
-        leaf.num_lines = len(executable_lines)
-        leaf.num_skipped = len(skipped_lines)
-        leaf.num_missed = len(missed_lines)
-        leaf.missed_lines = missed_lines
-    _populate(root)
+        leaf = CovFile.from_coverage(cov, path, path_list[-1])
+        root.insert_child(leaf, path_list[:-1])
 
     # clean the linear tree until the first splitting node
     # ... but remember the path to this new root node
     base = []
-    while len(root.children) == 1:
+    while root.num_children == 1:
         base.append(root.name)
-        root = root.children[0]
+        name = root.children_names[0]
+        root = root.get_child(name)
 
     return os.sep.join(base[1:]), root

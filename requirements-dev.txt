@@ -4,5 +4,6 @@ flake8-future-annotations
 mypy
 
 pytest
+pytest-mock
 pytest-sugar
 pytest-cov
