@@ -120,9 +120,6 @@ def build_sample_tree() -> tuple[CovModule, list[CovNode]]:
 def test_cov_module_basics() -> None:
     root, [mod_1, mod_2, mod_3, mod_4, mod_6] = build_sample_tree()
 
-    with pytest.raises(RuntimeError):
-        root.insert_child(mod_6, [mod_1.name, 'module_5'])
-
     assert root.name == 'root'
     assert root.num_children == 2
     for child, expected in zip(root.children, [mod_1, mod_2]):
@@ -137,6 +134,19 @@ def test_cov_module_basics() -> None:
     assert root.follow_path(['module_1', 'module_4.py']) is mod_4
 
     assert root.num_lines() == (146, 11, 17)
+
+
+def test_cov_module_bad_inserts() -> None:
+    root, [mod_1, mod_2, mod_3, mod_4, mod_6] = build_sample_tree()
+
+    with pytest.raises(RuntimeError):
+        root.insert_child(mod_6, [mod_1.name, 'module_5'])
+
+    with pytest.raises(RuntimeError):
+        mod_4.insert_child(mod_3)
+
+    with pytest.raises(RuntimeError):
+        root.insert_child(mod_2, [mod_2.name])
 
 
 def test_cov_module_iter() -> None:

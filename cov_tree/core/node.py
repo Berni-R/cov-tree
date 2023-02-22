@@ -88,17 +88,19 @@ class CovNode(ABC):
             for child in self._children.values():
                 yield from child.iter_tree(descend, curr_path + (child.name,))
 
-    def insert_child(self, child: 'CovNode', path: Path = tuple()) -> None:
-        node = self
-        for name in path:
-            if name not in node._children:
-                node._children[name] = CovModule(name)
-            node = node._children[name]
-
-        if child.name in node._children:
-            raise RuntimeError(f'Module "{node.name}" already has a child '
-                               f'named "{child.name}"')
-        node._children[child.name] = child
+    def insert_child(self, node: 'CovNode', path: Path = tuple()) -> None:
+        if path:
+            path = tuple(path)
+            module = path[0]
+            if module not in self._children:
+                self._children[module] = CovModule(module)
+            child = self._children[module]
+            child.insert_child(node, path[1:])
+        else:
+            if node.name in self._children:
+                raise RuntimeError(f'Module "{self.name}" already has a child '
+                                   f'named "{node.name}"')
+            self._children[node.name] = node
 
     @property
     def num_children(self) -> int:

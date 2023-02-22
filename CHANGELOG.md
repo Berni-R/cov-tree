@@ -9,6 +9,7 @@
 * rename threshold to descend
 * check lines for consistency
 * include cmdline in module
+* bug fix: do not allow inserting into file node - even if done by path
 
 
 ## 0.2.0
