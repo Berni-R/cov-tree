@@ -1,6 +1,6 @@
 # Change Log
 
-## Unpublished
+## 0.3.0
 
 * dynamically generate string for missed lines (ensures consistency)
 * generate string for missing lines for modules
