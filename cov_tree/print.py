@@ -1,7 +1,13 @@
 from typing import Callable, Sequence
+from typing import Protocol, Any
 from termcolor import cprint
 
 from .core import CovNode
+
+
+class SupportsWrite(Protocol):
+    def write(self, str_: str, /) -> Any | None:
+        ...
 
 
 _TREE_SET = {
@@ -19,6 +25,7 @@ def cov_color(
         coverage: float,
         thresholds: tuple[float, float, float] = (0.5, 0.5, 0.95),
 ) -> str | None:
+    thresholds = tuple(sorted(thresholds))  # type: ignore
     if coverage >= thresholds[2]:
         return 'light_green'
     elif coverage >= thresholds[1]:
@@ -38,7 +45,23 @@ def _print_tree(
         cov_color: Callable[[float], str | None] | None,
         tree_set: Sequence[str],
         descend: Callable[[CovNode], bool] | None,
+        file: SupportsWrite | None = None,
+        no_ansi_escape: bool = False,
 ) -> None:
+    print_: Callable[..., None]
+    kwargs: dict[str, Any] = dict(
+        end='',
+        file=file,
+    )
+    if no_ansi_escape:
+        print_ = print
+    else:
+        print_ = cprint
+        kwargs.update(dict(
+            color=cov_color(node.coverage()) if cov_color else None,
+            attrs=['bold'] if len(node.children) else [],
+        ))
+
     do_descend = descend is None or descend(node)
     is_leaf_like = len(node.children) == 0 or not do_descend
 
@@ -48,29 +71,24 @@ def _print_tree(
     if level_last:
         tree += tree_set[2] if level_last[-1] else tree_set[3]
 
-    print(tree, end='')
-    kwargs = dict(
-        color=cov_color(node.coverage()) if cov_color else None,
-        attrs=['bold'] if len(node.children) else [],
-        end='',
-    )
-    cprint(
+    print_(tree, end='', file=file)
+    print_(
         '{:{w}}'.format(node.name, w=tree_width-len(tree)),
         **kwargs,  # type: ignore
     )
     if is_leaf_like or show_module_stats:
-        cprint(
+        print_(
             f'  {node.num_executable_lines():6,d}'
             f'  {node.num_missed_lines():6,d}'
             f'  {node.coverage():5.0%}',
             **kwargs,  # type: ignore
         )
         if show_missing:
-            cprint(
+            print_(
                 f'  {node.missed_lines_str(not do_descend)}',
                 **kwargs,  # type: ignore
             )
-    print()
+    print_('', file=file)
 
     if not is_leaf_like:
         for child in node.children:
@@ -84,6 +102,8 @@ def _print_tree(
                 cov_color=cov_color,
                 tree_set=tree_set,
                 descend=descend,
+                file=file,
+                no_ansi_escape=no_ansi_escape,
             )
 
 
@@ -101,17 +121,30 @@ def print_tree(
         cov_color: Callable[[float], str | None] | None = None,
         tree_set: str = 'fancy',
         descend: Callable[[CovNode], bool] | None = None,
+        file: SupportsWrite | None = None,
+        no_ansi_escape: bool = False,
 ) -> None:
     tree_set_ = _TREE_SET[tree_set]
     tab = len(tree_set_[0])
     tree_width = _max_tree_width(tree, tab)
 
-    cprint('{:{w}}  {:>6s}  {:>6s}  {:>5s}'.format(
-        '', 'Stmts', 'Miss', 'Cover', w=tree_width), attrs=['bold'], end='')
+    print_: Callable[..., None]
+    if no_ansi_escape:
+        print_ = print
+        args = dict()
+    else:
+        print_ = cprint
+        args = dict(attrs=['bold'])
+
+    print_(
+        '{:{w}}  {:>6s}  {:>6s}  {:>5s}'.format(
+            '', 'Stmts', 'Miss', 'Cover', w=tree_width),
+        end='', file=file, **args
+    )
     if show_missing:
-        cprint('  Missing', attrs=['bold'], end='')
-    print()
-    print()
+        print_('  Missing', end='', file=file, **args)
+    print_('', file=file)
+    print_('', file=file)
     _print_tree(
         tree, tuple(),
         tree_width=tree_width,
@@ -120,4 +153,6 @@ def print_tree(
         cov_color=cov_color,
         tree_set=tree_set_,
         descend=descend,
+        file=file,
+        no_ansi_escape=no_ansi_escape,
     )

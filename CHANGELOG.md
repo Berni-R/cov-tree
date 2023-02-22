@@ -10,6 +10,8 @@
 * check lines for consistency
 * include cmdline in module
 * bug fix: do not allow inserting into file node - even if done by path
+* add ANSI escape sequence free printing
+* add printing to file instead of stdout
 
 
 ## 0.2.0
