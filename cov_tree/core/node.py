@@ -130,12 +130,25 @@ class CovFile(CovNode):
             executable_lines: Collection[int] = tuple(),
             skipped_lines: Collection[int] = tuple(),
             missed_lines: Collection[int] = tuple(),
+            strict: bool = True,
     ) -> None:
         super().__init__(name)
 
-        self.executable_lines = list(executable_lines)
-        self.skipped_lines = list(skipped_lines)
-        self.missed_lines = list(missed_lines)
+        self.executable_lines = set(executable_lines)
+        self.skipped_lines = set(skipped_lines)
+        self.missed_lines = set(missed_lines)
+
+        if strict:
+            if set(missed_lines) - set(executable_lines):
+                off = set(missed_lines) - set(executable_lines)
+                raise ValueError(
+                    f'Some missed lines that are not executable: {off}'
+                )
+            if set(skipped_lines) & set(executable_lines):
+                off = set(skipped_lines) & set(executable_lines)
+                raise ValueError(
+                    f'Some skipped lines that are executable: {off}'
+                )
 
     @classmethod
     def from_coverage(

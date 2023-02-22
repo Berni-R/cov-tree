@@ -7,6 +7,7 @@
 * restructure code folder tree
 * move tree iteration function into node class
 * rename threshold to descend
+* check lines for consistency
 
 
 ## 0.2.0

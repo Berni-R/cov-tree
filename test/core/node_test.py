@@ -97,11 +97,21 @@ def build_sample_tree() -> tuple[CovModule, list[CovNode]]:
         root.insert_child(mod)
 
     mod_3 = CovFile('module_3.py', range(30), [], range(5, 10))
-    mod_4 = CovFile('module_4.py', range(30), [21], [12, 13, 14, 20, 22])
+    mod_4 = CovFile(
+        'module_4.py',
+        set(range(30)) - {21},
+        [21],
+        [12, 13, 14, 20, 22],
+    )
     for mod in (mod_3, mod_4):
         mod_1.insert_child(mod)
 
-    mod_6 = CovFile('module_6.py', range(50), range(20, 30), [42, 43, 53])
+    mod_6 = CovFile(
+        'module_6.py',
+        set(range(55)) - set(range(20, 30)),
+        range(20, 30),
+        [42, 43, 53],
+    )
     root.insert_child(mod_6, [mod_1.name, 'module_5'])
 
     return root, [mod_1, mod_2, mod_3, mod_4, mod_6]
@@ -126,7 +136,7 @@ def test_cov_module_basics() -> None:
     assert len(root['module_1']) == 5
     assert root.follow_path(['module_1', 'module_4.py']) is mod_4
 
-    assert root.num_lines() == (152, 11, 17)
+    assert root.num_lines() == (146, 11, 17)
 
 
 def test_cov_module_iter() -> None:
@@ -156,9 +166,9 @@ def test_cov_module_iter_filter() -> None:
         'module_2.py': 0.9,
         'module_3.py': 0.83,
         'module_4.py': 0.83,
-        'module_5': 0.94,
-        # 'module_6.py': 0.94,  <- not descending into module_5, b/c 94% > 0.9
-        'root': 0.89,
+        'module_5': 0.93,
+        # 'module_6.py': 0.9x,  <- not descending into module_5, b/c of coverage
+        'root': 0.88,
     }
 
 
@@ -167,15 +177,15 @@ def test_cov_module_missed_lines() -> None:
 
     cov = {node.name: node.missed_lines_str() for node, _ in root.iter_tree()}
     assert cov == {
-        'module_1': '[module_3.py: 5-9], [module_4.py: 12-14, 20, 22], '
-                    '[module_5: [module_6.py: 42-43]]',
+        'module_1': '[module_3.py: 5-9], [module_4.py: 12-14, 20-22], '
+                    '[module_5: [module_6.py: 42-43, 53]]',
         'module_2.py': '20-23',
         'module_3.py': '5-9',
-        'module_4.py': '12-14, 20, 22',
-        'module_5': '[module_6.py: 42-43]',
-        'module_6.py': '42-43',
-        'root': '[module_1: [module_3.py: 5-9], [module_4.py: 12-14, 20, 22], '
-                '[module_5: [module_6.py: 42-43]]], [module_2.py: 20-23]',
+        'module_4.py': '12-14, 20-22',
+        'module_5': '[module_6.py: 42-43, 53]',
+        'module_6.py': '42-43, 53',
+        'root': '[module_1: [module_3.py: 5-9], [module_4.py: 12-14, 20-22], '
+                '[module_5: [module_6.py: 42-43, 53]]], [module_2.py: 20-23]',
     }
 
     cov = {
@@ -186,8 +196,8 @@ def test_cov_module_missed_lines() -> None:
         'module_1': '',
         'module_2.py': '20-23',
         'module_3.py': '5-9',
-        'module_4.py': '12-14, 20, 22',
+        'module_4.py': '12-14, 20-22',
         'module_5': '',
-        'module_6.py': '42-43',
+        'module_6.py': '42-43, 53',
         'root': '',
     }
