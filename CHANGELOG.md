@@ -8,6 +8,7 @@
 * move tree iteration function into node class
 * rename threshold to descend
 * check lines for consistency
+* include cmdline in module
 
 
 ## 0.2.0

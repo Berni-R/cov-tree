@@ -1,11 +1,38 @@
 from cov_tree import (
     build_cov_tree, print_tree, cov_color, get_available_tree_sets,
 )
-import argparse
+from argparse import ArgumentParser
 
 
 def main() -> int:
-    argparser = argparse.ArgumentParser(
+    argparser = get_arg_parser()
+    args = argparser.parse_args()
+
+    color = cov_color if args.color else None
+    if args.threshold is None:
+        descend = None
+    else:
+        descend = (lambda n: n.coverage() < args.threshold / 100)
+
+    try:
+        _, tree = build_cov_tree(args.coverage_file)
+        print_tree(
+            tree,
+            show_missing=args.show_missing,
+            show_module_stats=args.summarize,
+            cov_color=color,
+            tree_set=args.set,
+            descend=descend,
+        )
+    except Exception as e:
+        print(e)
+        return 1
+
+    return 0
+
+
+def get_arg_parser() -> ArgumentParser:
+    argparser = ArgumentParser(
         'cov-tree [coverage-file]',
     )
     argparser.add_argument(
@@ -41,25 +68,4 @@ def main() -> int:
         'the ooption use last is relevant.)',
     )
 
-    args = argparser.parse_args()
-    color = cov_color if args.color else None
-    if args.threshold is None:
-        descend = None
-    else:
-        descend = (lambda n: n.coverage() < args.threshold / 100)
-
-    try:
-        _, tree = build_cov_tree(args.coverage_file)
-        print_tree(
-            tree,
-            show_missing=args.show_missing,
-            show_module_stats=args.summarize,
-            cov_color=color,
-            tree_set=args.set,
-            descend=descend,
-        )
-    except Exception as e:
-        print(e)
-        return 1
-
-    return 0
+    return argparser
