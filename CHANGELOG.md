@@ -10,6 +10,7 @@
 * let path always start at root
 * add `depth` to node
 * separate Path and PathLike
+* print total line and divider lines
 
 ## 0.3.0
 

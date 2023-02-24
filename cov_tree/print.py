@@ -144,7 +144,12 @@ def print_tree(
     if show_missing:
         print_('  Missing', end='', file=file, **args)
     print_('', file=file)
+
+    print_('-' * (tree_width + 2 + 6 + 2 + 6 + 2 + 5), end='', file=file)
+    if show_missing:
+        print_('---------', end='', file=file)
     print_('', file=file)
+
     _print_tree(
         tree, tuple(),
         tree_width=tree_width,
@@ -155,4 +160,17 @@ def print_tree(
         descend=descend,
         file=file,
         no_ansi_escape=no_ansi_escape,
+    )
+
+    print_('-' * (tree_width + 2 + 6 + 2 + 6 + 2 + 5), end='', file=file)
+    if show_missing:
+        print_('---------', end='', file=file)
+    print_('', file=file)
+    print_(
+        '{:{w}}  {:6,d}  {:6,d}  {:5.0%}'.format(
+            'TOTAL',
+            tree.num_executable_lines,
+            tree.num_missed_lines,
+            tree.coverage, w=tree_width),
+        file=file,
     )
