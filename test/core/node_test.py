@@ -11,15 +11,15 @@ def test_cov_file_default_constructor() -> None:
     assert node.is_leaf
     assert node._children == dict()
     assert len(node) == 1
-    assert node.num_executable_lines() == 0
-    assert node.num_skipped_lines() == 0
-    assert node.num_missed_lines() == 0
+    assert node.num_executable_lines == 0
+    assert node.num_skipped_lines == 0
+    assert node.num_missed_lines == 0
     assert node.missed_lines_str() == ''
-    assert node.num_covered_lines() == 0
-    assert node.num_lines() == (0, 0, 0)
-    assert node.coverage() == 1
+    assert node.num_covered_lines == 0
+    assert node.num_lines == (0, 0, 0)
+    assert node.coverage == 1
     assert repr(node) == '<CovFile "name" 100%>'
-    assert list(node.iter_tree()) == [(node, ())]
+    assert list(node.iter_tree()) == [node]
 
 
 def test_cov_file_constructor() -> None:
@@ -33,15 +33,15 @@ def test_cov_file_constructor() -> None:
     assert node.is_leaf
     assert node._children == dict()
     assert len(node) == 1
-    assert node.num_executable_lines() == 9
-    assert node.num_skipped_lines() == 1
-    assert node.num_missed_lines() == 3
+    assert node.num_executable_lines == 9
+    assert node.num_skipped_lines == 1
+    assert node.num_missed_lines == 3
     assert node.missed_lines_str() == '2-5'
-    assert node.num_covered_lines() == 6
-    assert node.num_lines() == (9, 1, 3)
-    assert node.coverage() == 1 - 3 / 9
+    assert node.num_covered_lines == 6
+    assert node.num_lines == (9, 1, 3)
+    assert node.coverage == 1 - 3 / 9
     assert repr(node) == '<CovFile "file.py" 67%>'
-    assert list(node.iter_tree()) == [(node, ())]
+    assert list(node.iter_tree()) == [node]
 
     with pytest.raises(RuntimeError):
         node.insert_child(CovFile('something'))
@@ -61,15 +61,15 @@ def test_cov_file_from_cov(mocker: MockFixture) -> None:
     assert node.is_leaf
     assert node._children == dict()
     assert len(node) == 1
-    assert node.num_executable_lines() == 5
-    assert node.num_skipped_lines() == 3
-    assert node.num_missed_lines() == 2
+    assert node.num_executable_lines == 5
+    assert node.num_skipped_lines == 3
+    assert node.num_missed_lines == 2
     assert node.missed_lines_str() == '6-8'
-    assert node.num_covered_lines() == 5 - 2
-    assert node.num_lines() == (5, 3, 2)
-    assert node.coverage() == 1 - 2 / 5
+    assert node.num_covered_lines == 5 - 2
+    assert node.num_lines == (5, 3, 2)
+    assert node.coverage == 1 - 2 / 5
     assert repr(node) == '<CovFile "path" 60%>'
-    assert list(node.iter_tree()) == [(node, ())]
+    assert list(node.iter_tree()) == [node]
 
 
 def test_cov_module_default_constructor() -> None:
@@ -78,13 +78,13 @@ def test_cov_module_default_constructor() -> None:
     assert node.is_leaf
     assert node._children == dict()
     assert len(node) == 1
-    assert node.num_executable_lines() == 0
-    assert node.num_skipped_lines() == 0
-    assert node.num_missed_lines() == 0
+    assert node.num_executable_lines == 0
+    assert node.num_skipped_lines == 0
+    assert node.num_missed_lines == 0
     assert node.missed_lines_str() == ''
-    assert node.num_covered_lines() == 0
-    assert node.num_lines() == (0, 0, 0)
-    assert node.coverage() == 1
+    assert node.num_covered_lines == 0
+    assert node.num_lines == (0, 0, 0)
+    assert node.coverage == 1
     assert repr(node) == '<CovModule "module" 100%>'
 
 
@@ -131,9 +131,8 @@ def test_cov_module_basics() -> None:
     assert root['module_1'] is mod_1
     assert mod_1.num_children == 3
     assert len(root['module_1']) == 5
-    assert root.follow_path(['module_1', 'module_4.py']) is mod_4
 
-    assert root.num_lines() == (146, 11, 17)
+    assert root.num_lines == (146, 11, 17)
 
 
 def test_cov_module_bad_inserts() -> None:
@@ -152,15 +151,15 @@ def test_cov_module_bad_inserts() -> None:
 def test_cov_module_iter() -> None:
     root, _ = build_sample_tree()
 
-    paths = {node.name: path for node, path in root.iter_tree()}
+    paths = {node.name: node.path for node in root.iter_tree()}
     assert paths == {
-        'root': (),
-        'module_1': ('module_1',),
-        'module_2.py': ('module_2.py',),
-        'module_3.py': ('module_1', 'module_3.py'),
-        'module_4.py': ('module_1', 'module_4.py'),
-        'module_5': ('module_1', 'module_5'),
-        'module_6.py': ('module_1', 'module_5', 'module_6.py'),
+        'root': ('root',),
+        'module_1': ('root', 'module_1',),
+        'module_2.py': ('root', 'module_2.py',),
+        'module_3.py': ('root', 'module_1', 'module_3.py'),
+        'module_4.py': ('root', 'module_1', 'module_4.py'),
+        'module_5': ('root', 'module_1', 'module_5'),
+        'module_6.py': ('root', 'module_1', 'module_5', 'module_6.py'),
     }
 
 
@@ -168,8 +167,8 @@ def test_cov_module_iter_filter() -> None:
     root, _ = build_sample_tree()
 
     cov = {
-        node.name: round(node.coverage(), 2)
-        for node, _ in root.iter_tree(lambda n: n.coverage() < 0.9)
+        node.name: round(node.coverage, 2)
+        for node in root.iter_tree(lambda n: n.coverage < 0.9)
     }
     assert cov == {
         'module_1': 0.88,
@@ -185,7 +184,7 @@ def test_cov_module_iter_filter() -> None:
 def test_cov_module_missed_lines() -> None:
     root, _ = build_sample_tree()
 
-    cov = {node.name: node.missed_lines_str() for node, _ in root.iter_tree()}
+    cov = {node.name: node.missed_lines_str() for node in root.iter_tree()}
     assert cov == {
         'module_1': '[module_3.py: 5-9], [module_4.py: 12-14, 20-22], '
                     '[module_5: [module_6.py: 42-43, 53]]',
@@ -200,7 +199,7 @@ def test_cov_module_missed_lines() -> None:
 
     cov = {
         node.name: node.missed_lines_str(False)
-        for node, _ in root.iter_tree()
+        for node in root.iter_tree()
     }
     assert cov == {
         'module_1': '',

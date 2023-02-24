@@ -1,5 +1,5 @@
 from cov_tree import (
-    build_cov_tree, print_tree, cov_color, get_available_tree_sets,
+    CovNode, build_cov_tree, print_tree, cov_color, get_available_tree_sets,
 )
 from argparse import ArgumentParser
 
@@ -12,7 +12,9 @@ def main() -> int:
     if args.threshold is None:
         descend = None
     else:
-        descend = (lambda n: n.coverage() < args.threshold / 100)
+        def func(n: CovNode) -> bool:
+            return n.coverage < args.threshold / 100
+        descend = func
 
     try:
         _, tree = build_cov_tree(args.coverage_file)

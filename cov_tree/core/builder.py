@@ -40,5 +40,6 @@ def build_cov_tree(
         base.append(root.name)
         name = root.children_names[0]
         root = root.get_child(name)
+    root._parent = None
 
     return os.sep.join(base[1:]), root

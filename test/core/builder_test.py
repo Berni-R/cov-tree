@@ -40,11 +40,8 @@ def test_build_cov_tree(mocker: MockFixture) -> None:
 
     assert tree.name == 'root'
     assert len(tree) == 5
-    assert tree.get_child('mod2.py').num_skipped_lines() == 2
-    cov = {
-        node.name: round(node.coverage(), 2)
-        for node, _ in tree.iter_tree()
-    }
+    assert tree.get_child('mod2.py').num_skipped_lines == 2
+    cov = {node.name: round(node.coverage, 2) for node in tree.iter_tree()}
     assert cov == {
         'file1.py': 0.59,
         'file2.py': 0.8,
@@ -54,5 +51,5 @@ def test_build_cov_tree(mocker: MockFixture) -> None:
     }
 
     base, tree = build_cov_tree(drop_ext=True)
-    names = {node.name for node, _ in tree.iter_tree()}
+    names = {node.name for node in tree.iter_tree()}
     assert names == set('file1 file2 mod1 mod2 root'.split())

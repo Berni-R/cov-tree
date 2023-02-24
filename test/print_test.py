@@ -218,7 +218,7 @@ def test_print_collapsed(sample_tree: CovNode) -> None:
             no_ansi_escape=True,
             show_missing=True,
             show_module_stats=True,
-            descend=lambda n: n.coverage() < 0.9,
+            descend=lambda n: n.coverage < 0.9,
         )
         output = string_io.getvalue()
 

@@ -58,7 +58,7 @@ def _print_tree(
     else:
         print_ = cprint
         kwargs.update(dict(
-            color=cov_color(node.coverage()) if cov_color else None,
+            color=cov_color(node.coverage) if cov_color else None,
             attrs=['bold'] if len(node.children) else [],
         ))
 
@@ -78,9 +78,9 @@ def _print_tree(
     )
     if is_leaf_like or show_module_stats:
         print_(
-            f'  {node.num_executable_lines():6,d}'
-            f'  {node.num_missed_lines():6,d}'
-            f'  {node.coverage():5.0%}',
+            f'  {node.num_executable_lines:6,d}'
+            f'  {node.num_missed_lines:6,d}'
+            f'  {node.coverage:5.0%}',
             **kwargs,  # type: ignore
         )
         if show_missing:

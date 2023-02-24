@@ -1,5 +1,16 @@
 # Change Log
 
+## Unpublished
+
+* add parent to CovNode class
+* ... with it, also add `root`
+* make `coverage` and line number properties (tree should seldomly be too deep)
+* remove `CovNode.follow_path`, simplify iterator to just yield nodes
+* but add `path` property to node
+* let path always start at root
+* add `depth` to node
+* separate Path and PathLike
+
 ## 0.3.0
 
 * dynamically generate string for missed lines (ensures consistency)
