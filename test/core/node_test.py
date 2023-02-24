@@ -1,4 +1,5 @@
 import pytest
+from typing import Collection
 from coverage import Coverage  # type: ignore
 from pytest_mock import MockFixture
 
@@ -9,8 +10,11 @@ def test_cov_file_default_constructor() -> None:
     node = CovFile('name')
     assert node.name == 'name'
     assert node.is_leaf
-    assert node._children == dict()
+    assert node.children == ()
+    assert node.parent is None
+    assert node.is_root
     assert len(node) == 1
+    assert node.depth == 0
     assert node.num_executable_lines == 0
     assert node.num_skipped_lines == 0
     assert node.num_missed_lines == 0
@@ -31,8 +35,11 @@ def test_cov_file_constructor() -> None:
     )
     assert node.name == 'file.py'
     assert node.is_leaf
-    assert node._children == dict()
+    assert node.children == ()
+    assert node.parent is None
+    assert node.is_root
     assert len(node) == 1
+    assert node.depth == 0
     assert node.num_executable_lines == 9
     assert node.num_skipped_lines == 1
     assert node.num_missed_lines == 3
@@ -47,6 +54,26 @@ def test_cov_file_constructor() -> None:
         node.insert_child(CovFile('something'))
 
 
+@pytest.mark.parametrize('executable_lines, skipped_lines, missed_lines', [
+    ([1, 2, 3], [2], []),
+    ([2, 3], [], [1]),
+    ([1, 2, 4], [5], [3, 4]),
+    ([1, 2, 4, 5, 9, 10, 11, 15, 16, 17], [11], [2, 4, 5]),
+])
+def test_cov_bad_file_constructor(
+        executable_lines: Collection[int],
+        skipped_lines: Collection[int],
+        missed_lines: Collection[int],
+) -> None:
+    with pytest.raises(ValueError):
+        CovFile(
+            'file.py',
+            executable_lines=executable_lines,
+            skipped_lines=skipped_lines,
+            missed_lines=missed_lines,
+        )
+
+
 def test_cov_file_from_cov(mocker: MockFixture) -> None:
     mocker.patch(
         'coverage.Coverage.analysis2',
@@ -59,8 +86,11 @@ def test_cov_file_from_cov(mocker: MockFixture) -> None:
 
     assert node.name == 'path'
     assert node.is_leaf
-    assert node._children == dict()
+    assert node.children == ()
+    assert node.parent is None
+    assert node.is_root
     assert len(node) == 1
+    assert node.depth == 0
     assert node.num_executable_lines == 5
     assert node.num_skipped_lines == 3
     assert node.num_missed_lines == 2
@@ -76,7 +106,8 @@ def test_cov_module_default_constructor() -> None:
     node = CovModule('module')
     assert node.name == 'module'
     assert node.is_leaf
-    assert node._children == dict()
+    assert node.children == ()
+    assert node.parent is None
     assert len(node) == 1
     assert node.num_executable_lines == 0
     assert node.num_skipped_lines == 0
@@ -121,16 +152,33 @@ def test_cov_module_basics() -> None:
     root, [mod_1, mod_2, mod_3, mod_4, mod_6] = build_sample_tree()
 
     assert root.name == 'root'
+    assert root.parent is None
+    assert root.is_root
+    assert root.depth == 0
     assert root.num_children == 2
     for child, expected in zip(root.children, [mod_1, mod_2]):
         assert child is expected
+        assert child.parent is root
+        assert child.root is root
+        assert not child.is_root
+        assert child.depth == 1
     for child, name in zip(root.children, root.children_names):
         assert child.name == name
+        assert child.parent is root
+        assert child.root is root
+        assert not child.is_root
+        assert child.depth == 1
     assert len(root) == 7
     assert root.get_child('module_2.py') is mod_2
     assert root['module_1'] is mod_1
     assert mod_1.num_children == 3
     assert len(root['module_1']) == 5
+
+    for child in mod_1.children:
+        assert child.parent is mod_1
+        assert child.root is root
+        assert not child.is_root
+        assert child.depth == 2
 
     assert root.num_lines == (146, 11, 17)
 
