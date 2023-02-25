@@ -45,7 +45,7 @@ def get_arg_parser() -> ArgumentParser:
     argparser.add_argument(
         '-t', '--threshold', required=False, default=None, type=float,
         help='If the coverage is at least this high (measured in percent), '
-        'do not show the contents of the folder / sub-module.',
+        'collapse the folder / sub-module into a single line.',
     )
     argparser.add_argument(
         '-m', '--show-missing', action='store_true',
@@ -56,9 +56,9 @@ def get_arg_parser() -> ArgumentParser:
         help='Show per sub-module summaries.',
     )
     argparser.add_argument(
-        '--set', default='ascii',
+        '--set', default='fancy',
         choices=get_available_tree_sets(),
-        help='Only use pure ASCII characters.',
+        help='Choose a set of characters for printing the tree.',
     )
     argparser.add_argument(
         '-c', '--color', action='store_true', default=False,
