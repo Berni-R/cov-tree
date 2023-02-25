@@ -20,7 +20,7 @@ def test_cov_file_default_constructor() -> None:
     assert node.num_missed_lines == 0
     assert node.missed_lines_str() == ''
     assert node.num_covered_lines == 0
-    assert node.num_lines == (0, 0, 0)
+    assert node.num_total_lines == 0
     assert node.coverage == 1
     assert repr(node) == '<CovFile "name" 100%>'
     assert list(node.iter_tree()) == [node]
@@ -45,7 +45,7 @@ def test_cov_file_constructor() -> None:
     assert node.num_missed_lines == 3
     assert node.missed_lines_str() == '2-5'
     assert node.num_covered_lines == 6
-    assert node.num_lines == (9, 1, 3)
+    assert node.num_total_lines == 10
     assert node.coverage == 1 - 3 / 9
     assert repr(node) == '<CovFile "file.py" 67%>'
     assert list(node.iter_tree()) == [node]
@@ -96,7 +96,7 @@ def test_cov_file_from_cov(mocker: MockFixture) -> None:
     assert node.num_missed_lines == 2
     assert node.missed_lines_str() == '6-8'
     assert node.num_covered_lines == 5 - 2
-    assert node.num_lines == (5, 3, 2)
+    assert node.num_total_lines == 8
     assert node.coverage == 1 - 2 / 5
     assert repr(node) == '<CovFile "path" 60%>'
     assert list(node.iter_tree()) == [node]
@@ -114,7 +114,7 @@ def test_cov_module_default_constructor() -> None:
     assert node.num_missed_lines == 0
     assert node.missed_lines_str() == ''
     assert node.num_covered_lines == 0
-    assert node.num_lines == (0, 0, 0)
+    assert node.num_total_lines == 0
     assert node.coverage == 1
     assert repr(node) == '<CovModule "module" 100%>'
 
@@ -180,7 +180,7 @@ def test_cov_module_basics() -> None:
         assert not child.is_root
         assert child.depth == 2
 
-    assert root.num_lines == (146, 11, 17)
+    assert root.num_total_lines == 146 + 11
 
 
 def test_cov_module_bad_inserts() -> None:
