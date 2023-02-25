@@ -12,10 +12,12 @@ Path: TypeAlias = tuple[str, ...]
 
 PathLike: TypeAlias = Sequence[str]
 """A convenience type alias for a tree path-like type,
-i.e. a sequence of node names."""
+i.e. a sequence of node names. It can, but does not need to be a
+:class:`~Path`."""
 
 
 class CovNode(ABC):
+    """A general node (i.e. a directory or file) of a module structure."""
     def __init__(self, name: str) -> None:
         self._name = name
         self._children: dict[str, 'CovNode'] = dict()
@@ -24,66 +26,87 @@ class CovNode(ABC):
 
     @property
     def name(self) -> str:
+        """The (file-/directory-)name of this node."""
         return self._name
 
     @property
     def is_leaf(self) -> bool:
+        """Whether this is a leaf node, i.e. an ordinary file."""
         return not self._children
 
     @property
     def parent(self) -> 'CovNode | None':
+        """A reference to the parent node. None, if this is the root."""
         return self._parent
 
     @property
     def root(self) -> 'CovNode':
+        """A reference to the root node of the tree."""
         if self._parent is None:
             return self
         return self._parent.root
 
     @property
     def is_root(self) -> bool:
+        """Whether this is the root node of this tree.
+
+        This is quivalent to ``self.root == self``."""
         return self._parent is None
 
     @abstractproperty
     def num_executable_lines(self) -> int:
+        """The number of executable code lines. This does *not* include skipped
+        lines."""
         ...
 
     @abstractproperty
     def num_skipped_lines(self) -> int:
+        """The number of lines skipped by ``coverage``."""
         ...
 
     @abstractproperty
     def num_missed_lines(self) -> int:
+        """The number of not covered lines:
+        ``num_executable_lines - num_covered_lines``."""
         ...
+
+    @property
+    def num_total_lines(self) -> int:
+        """The total number of lines, i.e.
+        ``self.num_executable_lines + self.num_skipped_lines``."""
+        return self.num_executable_lines + self.num_skipped_lines
+
+    @property
+    def num_covered_lines(self) -> int:
+        """The number of covered lines:
+        ``num_executable_lines - num_missed_lines``."""
+        return self.num_executable_lines - self.num_missed_lines
 
     @abstractmethod
     def missed_lines_str(self, recursive: bool = True) -> str:
+        """The line numbers of the missed lines in a human readable from.
+
+        Args:
+            recursive: If this is True for a module, return the lines of the
+                       sub-module / files therein, otherwise just return ''.
+
+        Returns:
+            A string like '1-7, 11, 15-16' for files and something similar to
+            '[file1.py: 3-5], [[file2.py: 5], [file4.py: 9-12, 15-20]]'.
+        """
         ...
 
     @property
     def coverage(self) -> float:
         """The coverage. If there are no line, it defaults to 100%.
 
-        Returns:
-            The fraction of covered lines as a float in the interval [0, 1].
+        It calculates ``1 - num_missed_lines / num_executable_lines``.
         """
         num_exec = self.num_executable_lines
         if num_exec == 0:
             return 1.0
 
         return 1 - self.num_missed_lines / num_exec
-
-    @property
-    def num_lines(self) -> tuple[int, int, int]:
-        return (
-            self.num_executable_lines,
-            self.num_skipped_lines,
-            self.num_missed_lines,
-        )
-
-    @property
-    def num_covered_lines(self) -> int:
-        return self.num_executable_lines - self.num_missed_lines
 
     def get_child(self, name: str) -> 'CovNode':
         """The the child with the given name."""
@@ -96,6 +119,16 @@ class CovNode(ABC):
             self,
             descend: Callable[['CovNode'], bool] | None = None,
     ) -> Iterator['CovNode']:
+        """Iterator over all node (leaf or not and self) in this tree.
+
+        Args:
+            descend: An optional callable that takes a node. If there turn value
+                     is True, descend into this node, otherwise do not yield its
+                     children.
+
+        Yields:
+            All the nodes in this tree.
+        """
         yield self
 
         if descend is None or descend(self):
@@ -107,6 +140,14 @@ class CovNode(ABC):
             node: 'CovNode',
             at_path: PathLike = tuple(),
     ) -> None:
+        """Insert a new node into this tree.
+
+        Args:
+            node: The node to insert.
+            at_path: If the path is None, place the new node as a child.
+                     Otherwise follow the given path and then place the node
+                     there as a child.
+        """
         if at_path:
             at_path = tuple(at_path)
             module = at_path[0]
@@ -124,22 +165,30 @@ class CovNode(ABC):
 
     @property
     def num_children(self) -> int:
+        """To number of (direct) children."""
         return len(self._children)
 
     @property
     def children(self) -> tuple['CovNode', ...]:
+        """A tuple to the (direct) children."""
         return tuple(self._children.values())
 
     @property
     def children_names(self) -> tuple[str, ...]:
+        """A tuple with the names of the children. This is equivalent to
+        ``tuple(child.name for child in self)``."""
         return tuple(self._children.keys())
 
     @property
     def depth(self) -> int:
+        """The depth of this node in the tree
+        (which implies that the root always has depth 0)."""
         return 0 if self._parent is None else (self._parent.depth + 1)
 
     @property
     def path(self) -> Path:
+        """The path in the tree to this node. The path is sequence of node names
+        (and of type :class:`~Path`)."""
         if self._parent is None:
             return (self._name,)
         return self._parent.path + (self._name,)
@@ -189,6 +238,19 @@ class CovFile(CovNode):
             path: TMorf,
             name: str | None = None,
     ) -> 'CovFile':
+        """Create a leaf node from a coverage report and its path.
+
+        Args:
+            cov: A :class:`coverage.Coverage` object with the data.
+            path: The path as in the :class:`Coverage` object for which we want
+                  to create the node.
+            name: The name this node will have. It default to the filename
+                  (without the directory) given by :obj:`path`.
+
+        Returns:
+            A new instance of :class:`~CovNode` with the data as given by the
+            :obj:`cov` for :obj:`path`.
+        """
         filename, executable_lines, skipped_lines, missed_lines, miss_str = (
             cov.analysis2(path)
         )
@@ -245,7 +307,7 @@ class CovModule(CovNode):
         )
 
     def missed_lines_str(self, recursive: bool = True) -> str:
-        if recursive <= 0:
+        if not recursive:
             return ''
 
         missed: list[str] = []
