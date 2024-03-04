@@ -1,29 +1,31 @@
-from cov_tree import (
-    CovNode, build_cov_tree, print_tree, cov_color, get_available_tree_sets,
-)
+from typing import Sequence
 from argparse import ArgumentParser
 
+from .version import __version__
+from .core import CovNode, build_cov_tree
+from .print import print_tree, cov_color, get_available_tree_sets
 
-def main() -> int:
+
+def main(args: Sequence[str] | None = None) -> int:
     argparser = get_arg_parser()
-    args = argparser.parse_args()
+    args_ns = argparser.parse_args(args)
 
-    color = cov_color if args.color else None
-    if args.threshold is None:
+    color = cov_color if args_ns.color else None
+    if args_ns.threshold is None:
         descend = None
     else:
         def func(n: CovNode) -> bool:
-            return n.coverage < args.threshold / 100
+            return n.coverage < args_ns.threshold / 100
         descend = func
 
     try:
-        _, tree = build_cov_tree(args.coverage_file)
+        _, tree = build_cov_tree(args_ns.coverage_file)
         print_tree(
             tree,
-            show_missing=args.show_missing,
-            show_module_stats=args.summarize,
+            show_missing=args_ns.show_missing,
+            show_module_stats=args_ns.summarize,
             cov_color=color,
-            tree_set=args.set,
+            tree_set=args_ns.set,
             descend=descend,
         )
     except Exception as e:
@@ -37,11 +39,13 @@ def get_arg_parser() -> ArgumentParser:
     argparser = ArgumentParser(
         'cov-tree [coverage-file]',
     )
+
     argparser.add_argument(
         'coverage_file',
         nargs='?', default='.coverage',
         help='The path to the coverage report file to print.',
     )
+
     argparser.add_argument(
         '-t', '--threshold', required=False, default=None, type=float,
         help='If the coverage is at least this high (measured in percent), '
@@ -68,6 +72,11 @@ def get_arg_parser() -> ArgumentParser:
         '--no-color', action='store_false', dest='color',
         help='Turn off coloring. (If both, --no-color and --color are given, '
         'the ooption use last is relevant.)',
+    )
+
+    argparser.add_argument(
+        '-v', '--version', action='version',
+        version=f'version {__version__}',
     )
 
     return argparser

@@ -23,7 +23,7 @@ def get_available_tree_sets() -> list[str]:
 
 def cov_color(
         coverage: float,
-        thresholds: tuple[float, float, float] = (0.5, 0.5, 0.95),
+        thresholds: tuple[float, float, float] = (0.8, 0.8, 0.97),
 ) -> str | None:
     thresholds = tuple(sorted(thresholds))  # type: ignore
     if coverage >= thresholds[2]:
