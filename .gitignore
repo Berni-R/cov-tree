@@ -12,3 +12,5 @@ __pycache__
 
 ipython-input-*-profile
 profile.json
+
+.DS_Store
