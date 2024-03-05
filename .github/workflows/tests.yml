@@ -1,0 +1,32 @@
+name: Test Package
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package & dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools
+          python -m pip install .[dev]
+      - name: Lint with flake8
+        run: flake8
+      - name: Type checking with mypy
+        run: mypy
+      - name: Testing with pytest
+        run: |
+          coverage run -m pytest
+          coverage report -m --fail-under=95
