@@ -4,6 +4,8 @@ if sys.version_info >= (3, 10):
     from typing import TypeAlias  # pragma: no cover
 else:
     from typing_extensions import TypeAlias  # pragma: no cover
+    if sys.version_info < (3, 9):  # pragma: no cover
+        from typing import Tuple
 from typing import Sequence, Collection, Iterator, Callable
 from abc import ABC, abstractproperty, abstractmethod
 import os
@@ -13,7 +15,10 @@ from coverage.types import TMorf  # type: ignore
 from .tools import missed_lines_str
 
 
-Path: TypeAlias = tuple[str, ...]
+if sys.version_info >= (3, 9):
+    Path: TypeAlias = tuple[str, ...]
+else:
+    Path: TypeAlias = Tuple[str, ...]
 """A convenience type alias for a tree path, i.e. a tuple of node names."""
 
 PathLike: TypeAlias = Sequence[str]
