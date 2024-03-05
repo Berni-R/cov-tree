@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pytest
 
 from cov_tree.cmdline import get_arg_parser, main

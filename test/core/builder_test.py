@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pytest_mock import MockFixture
 from typing import Collection
 

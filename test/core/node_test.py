@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pytest
 from typing import Collection
 from coverage import Coverage  # type: ignore
