@@ -1,8 +1,9 @@
 from __future__ import annotations
-try:  # pragma: no cover
-    from typing import TypeAlias
-except ImportError:  # pragma: no cover
-    from typing_extensions import TypeAlias
+import sys
+if sys.version_info >= (3, 8):
+    from typing import TypeAlias  # pragma: no cover
+else:
+    from typing_extensions import TypeAlias  # pragma: no cover
 from typing import Sequence, Collection, Iterator, Callable
 from abc import ABC, abstractproperty, abstractmethod
 import os
