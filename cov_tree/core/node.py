@@ -1,6 +1,6 @@
 from __future__ import annotations
 import sys
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 10):
     from typing import TypeAlias  # pragma: no cover
 else:
     from typing_extensions import TypeAlias  # pragma: no cover
