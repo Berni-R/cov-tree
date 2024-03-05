@@ -1,6 +1,11 @@
 # Change Log
 
-## Unpublished
+## 0.5.0
+
+* make compatible with all Python versions from 3.8 through 3.12
+
+
+## 0.4.0
 
 * add parent to CovNode class
 * ... with it, also add `root`
