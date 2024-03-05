@@ -1,5 +1,9 @@
 from __future__ import annotations
-from typing import Sequence, TypeAlias, Collection, Iterator, Callable
+try:  # pragma: no cover
+    from typing import TypeAlias
+except ImportError:  # pragma: no cover
+    from typing_extensions import TypeAlias
+from typing import Sequence, Collection, Iterator, Callable
 from abc import ABC, abstractproperty, abstractmethod
 import os
 from coverage import Coverage  # type: ignore
