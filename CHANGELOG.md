@@ -1,5 +1,11 @@
 # Change Log
 
+
+## Unpublished
+
+* make tests pass on Windows OS
+
+
 ## 0.5.0
 
 * make compatible with all Python versions from 3.8 through 3.12
@@ -16,6 +22,7 @@
 * add `depth` to node
 * separate Path and PathLike
 * print total line and divider lines
+
 
 ## 0.3.0
 

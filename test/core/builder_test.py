@@ -37,7 +37,7 @@ def test_build_cov_tree(mocker: MockFixture) -> None:
     )
 
     base, tree = build_cov_tree()
-    assert base == '/path/to/folder'
+    assert base == '/path/to/folder' or base == '\\path\\to\\folder'
 
     assert tree.name == 'root'
     assert len(tree) == 5
